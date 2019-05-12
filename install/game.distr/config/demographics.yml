@@ -1,74 +1,97 @@
 ---
 demographics:
   min_age: 18
-  max_age: 150
+  max_age: 65
   required_properties:
-  - opticcolor
-  - basecolor
-  - trimcolor
+  - actor
+  - hair
+  - eyes
+  - skin
+  - height
+  - physique
   - fullname
   - gender
+  - birthdate
   nickname_field: callsign
   nickname_format: "%{name} (%{nickname})"
   disable_auto_shortcuts: false
   editable_properties:
   - fullname
+  - hair
+  - physique
+  - callsign
   - gender
-  - opticcolor
-  - basecolor
-  - trimcolor
   demographics:
+  - actor
+  - hair
+  - eyes
+  - skin
+  - height
+  - physique
   - fullname
   - gender
-  - opticcolor
-  - basecolor
-  - trimcolor
+  - birthdate
+  - callsign
   groups:
-    League:
-      desc: Leagues encompassing all major sports with various teams.
+    Faction:
+      desc: Military faction.
       values:
-        Silver Flag League: Test
-        Dark Sports Foundation: Test
-    Class:
-      desc: >-
-      The family of sport of which your Leaguer belongs. See wiki for more details.
+        Navy: Join the fleet, see the worlds.
+        Marines: Semper fi.
+    Department:
+      desc: The ship is divided into several departments.  See the wiki for details.
       values:
-        Target Class: 'Bowling, golf (+3 Aiming)'
-        Haven Class: 'Baseball, cricket (+3 Aiming)'
-        Striking Class: 'Karate, boxing (+3 Melee)'
-        Sword Class: 'Kendo, fencing, jousting (+3 Melee)'
-        Goal Class: 'Soccer, hockey, football, basketball, rugby, roller derby (+3 Agility)'
-        Volley Class: 'Tennis, volleyball (+3 Agility)'
-    Model:
-      desc: >-
-      The model of your Leaguer, usually built to mimic traditional uniforms of a 
-      specific sport. Only the listed models below are permitted.
+        Air Wing: Viper and Raptor crews and deckhands. (Officers and Enlisted)
+        Marines: Boots on the ground. (Enlisted only)
+        Support: Support personnel - Deck crew, medical. (Officers and Enlisted)
+    Colony:
+      desc: Your character's home world.
       values:
-        Soccer Leaguer: Test
-        Baseball Leaguer: Test
-        Hockey Leaguer: Test
-        Football Leaguer: Test
-        Basketball Leaguer: Test
-        Volleyball Leaguer: Test
-        Tennis Leaguer: Test
-        Karate Leaguer: Test
-        Kendo Leaguer: Test
-        Boxing Leaguer: Test
-        Bowling Leaguer: Test
-        Golf Leaguer: Test
-        Fencing Leaguer: Test
-        Rugby Leaguer: Test
-        Cricket Leaguer: Test
+        Aerilon: Bread basket of the colonies.
+        Aquaria: Cold, harsh world popular with tourists.
+        Canceron: Crowded and hot, a developing nation.
+        Caprica: Rich center of colonial culture and industry.
+        Gemenon: Fundamentalist religion and isolationist people.
+        Leonis: Old imperialist empire in decline, still known for culture and fashion.
+        Libran: Neutral colony renowned for fostering inter-colonial cooperation.
+        Picon: Water world famous for its beaches and strong navy.
+        Sagittaron: Poor colony, oft-exploited, now carved into several protectorates.
+        Scorpia: Lush jungles and bitter clan warfare. Home to shipyards constructing
+          the Battlestars.
+        Tauron: An up-and-coming socialist republic with a strong agricultural base
+          and developing industries.
+        Virgon: A monarchy in decline, clinging to old traditions.
+    Position:
+      desc: Job.
+      values:
+        Viper Pilot: Navy Viper pilot.
+        Raptor Pilot: Navy Raptor pilot.
+        Raptor ECO: Navy Raptor Electronic Countermeasures Officer
+        Rifleman: Marine rifleman.
+        Gunner: Marine support/heavy weapons specialist.
+        Combat Engineer: Marine demolitions, construction, maintenance.
+        Recon: Marine scout.
+        Combat Medic: Marine medic.
+        Doctor: Navy doc.
+        Nurse: Navy nurse.
+        Corpsman: Navy medic.
+        Medical Support: Other medical personnel.
+        Deck Crew: Air wing support/maintenance personnel.
+        Other: Any other position.
   shortcuts:
     groups: group
     colonies: group colony
     demographics: demographic
     birthday: birthdate
   help_text:
-    gender: '%xcgender <male/female/other>%xn'
-    opticcolor: '%xcopticcolor <eye color>%xn'
-    basecolor: '%xcbasecolor <the color of the majority of your armor>%xn'
-    trimcolor: '%xcbasecolor <the color of the trim on your armor>%xn'
+    actor: "%xcactor <actor>%xn - See 'help actors'."
+    physique: "%xcphysique <build/body type>%xn - athletic, wiry, slim, pudgy, etc."
+    gender: "%xcgender <male/female/other>%xn"
+    hair: "%xchair <hair color>%xn"
+    eyes: "%xceyes <eye color>%xn"
+    skin: "%xcskin <complexion>%xn"
+    birthdate: "%xcbirthdate <mm/dd/yyy>%xn or %xcage <years>%xn"
+    callsign: "%xccallsign <callsign>%xn - Non-pilots may leave blank or enter a nickname."
   census_fields:
   - field: name
     width: 28
@@ -78,15 +101,11 @@ demographics:
     title: Gender
     value: gender
   - field: group
-    width: 10
-    title: Model
-    value: Model
-  - field: group
-    width: 10
-    title: League
-    value: League
+    width: 20
+    title: Faction
+    value: Faction
   - field: group
     width: 20
-    title: Rank
-    value: Rank
+    title: Position
+    value: Position
   private_properties: []
