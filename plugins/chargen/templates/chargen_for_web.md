@@ -1,0 +1,1 @@
+In-game character generation is unavailable on this game. Please use the [Web Portal Chargen](http://silverflagrp.com/chargen).
