@@ -7,6 +7,12 @@ module AresMUSH
       Global.client_monitor.notify_web_clients(:new_scene_activity, web_msg) do |char|
         Scenes.can_read_scene?(char, scene) && Scenes.is_watching?(scene, char)
       end
+      message = t('scenes.new_scene_activity', :id => scene.id)
+      scene.watchers.each do |w|
+        if (last_posed != w.name)
+          Login.notify(w, :scene, message, scene.id)
+        end
+      end
     end
     
     def self.can_manage_scene?(actor, scene)
@@ -36,7 +42,8 @@ module AresMUSH
     
     def self.can_delete_scene?(actor, scene)
       return false if !actor
-      return true if (scene.owner == actor) && scene.participants.count == 0
+      real_poses = scene.scene_poses.select { |p| !p.is_ooc }
+      return true if (scene.owner == actor && (real_poses.count == 0) && !scene.scene_log)
       return true if Scenes.can_manage_scene?(actor, scene)
       return false
     end
@@ -44,7 +51,7 @@ module AresMUSH
     def self.restart_scene(scene)
       Scenes.create_scene_temproom(scene)
       scene.update(completed: false)
-      Scenes.set_scene_location(scene, scene.location)
+      scene.update(was_restarted: true)
       Scenes.new_scene_activity(scene, :status_changed, nil)
     end
     
@@ -55,8 +62,11 @@ module AresMUSH
         if (pose)
           pose.update(restarted_scene_pose: true)
           scene.scene_log.delete
+        else 
+          Global.logger.warn "Problem adding restarted scene pose."
         end
       end
+      Scenes.remove_recent_scene(scene)
       Scenes.new_scene_activity(scene, :status_changed, nil)
     end
     
@@ -73,10 +83,11 @@ module AresMUSH
       scene.update(shared: true)
       scene.update(date_shared: Time.now)
       Scenes.create_log(scene)
+      Scenes.add_recent_scene(scene)
+      
       Scenes.new_scene_activity(scene, :status_changed, nil)  
-      
       Global.dispatcher.queue_event SceneSharedEvent.new(scene.id)
-      
+            
       return true
     end
       
@@ -112,8 +123,14 @@ module AresMUSH
       scene.update(date_completed: Time.now)
       
       Scenes.new_scene_activity(scene, :status_changed, nil)
-      scene.participants.each do |char|
-        Scenes.handle_scene_participation_achievement(char)
+      
+      if (!scene.was_restarted)
+        scene.participants.each do |char|
+          Scenes.handle_scene_participation_achievement(char)
+          if (FS3Skills.is_enabled?)
+            FS3Skills.luck_for_scene(char, scene)
+          end
+        end
       end
     end    
     
@@ -240,8 +257,13 @@ module AresMUSH
       scene.poses_in_order.to_a.each do |pose|
         next if pose.is_ooc
         
-        formatted_pose = pose.pose || ""
+        if (pose.place_name)
+          formatted_pose = "*At #{pose.place_name}*:\n#{pose.pose}"
+        else
+          formatted_pose = "#{pose.pose}"
+        end
         formatted_pose = formatted_pose.gsub(/</, '&lt;').gsub(/>/, '&gt;').gsub(/%r/i, "\n").gsub(/%t/i, "  ")
+                
                 
         formatted_pose = formatted_pose.split("\n").map { |line| line.strip }.join("\n")
                 
@@ -274,6 +296,7 @@ module AresMUSH
       log
     end
 
+    # Place name overrides whatever place the character is in.
     def self.emit_pose(enactor, pose, is_emit, is_ooc, place_name = nil, system_pose = false, room = nil)
       room = room || enactor.room
       formatted_pose = pose
@@ -294,7 +317,7 @@ module AresMUSH
         client.emit Scenes.custom_format(formatted_pose, char, enactor, is_emit, is_ooc, place_name)
       end
 
-      Global.dispatcher.queue_event PoseEvent.new(enactor, pose, is_emit, is_ooc, system_pose, room)
+      Global.dispatcher.queue_event PoseEvent.new(enactor, pose, is_emit, is_ooc, system_pose, room, place_name)
       
       if (!is_ooc && room.room_type != "OOC")
           Scenes.update_pose_order(enactor, room)
@@ -520,6 +543,7 @@ module AresMUSH
         is_setpose: pose.is_setpose,
         is_system_pose: pose.is_system_pose?,
         restarted_scene_pose: pose.restarted_scene_pose,
+        place_name: pose.place_name,
         is_ooc: pose.is_ooc,
         raw_pose: pose.pose,
         can_edit: pose.can_edit?(viewer),
@@ -539,7 +563,21 @@ module AresMUSH
             status: Website.activity_status(p),
             is_ooc: p.is_admin? || p.is_playerbit?,
             online: Login.is_online?(p)  }}
-          
+      
+      if (scene.room)
+        places = scene.room.places.to_a.sort_by { |p| p.name }.map { |p| {
+          name: p.name,
+          chars: p.characters.map { |c| {
+            name: c.name,
+            icon: Website.icon_for_char(c)
+          }}
+        }}
+      else
+        places = nil
+      end
+         
+      combat = FS3Combat.is_enabled? ? FS3Combat.combat_for_scene(scene) : nil
+      
       {
         id: scene.id,
         title: scene.title,
@@ -556,7 +594,11 @@ module AresMUSH
         is_watching: viewer && scene.watchers.include?(viewer),
         is_unread: viewer && scene.is_unread?(viewer),
         pose_order: Scenes.build_pose_order_web_data(scene),
-        poses: scene.poses_in_order.map { |p| Scenes.build_scene_pose_web_data(p, viewer) }
+        combat: combat ? combat.id : nil,
+        places: places,
+        poses: scene.poses_in_order.map { |p| Scenes.build_scene_pose_web_data(p, viewer) },
+        fs3_enabled: FS3Skills.is_enabled?,
+        fs3combat_enabled: FS3Combat.is_enabled?
       }
     end
     
@@ -577,5 +619,24 @@ module AresMUSH
          }}
     end
     
+    def self.recent_scenes
+      (Game.master.recent_scenes || []).map { |id| Scene[id] }.select { |s| s }
+    end
+    
+    def self.remove_recent_scene(scene)
+      recent = Game.master.recent_scenes
+      recent.delete scene.id
+       Game.master.update(recent_scenes: recent)
+    end
+    
+    def self.add_recent_scene(scene)
+      recent = Game.master.recent_scenes
+      recent.unshift(scene.id)
+      recent = recent.uniq
+      if (recent.count > 30)
+        recent.pop
+      end
+      Game.master.update(recent_scenes: recent)
+    end
   end
 end
