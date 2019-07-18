@@ -64,7 +64,6 @@ module AresMUSH
       chargen_data[:demographics].each do |k, v|
         char.update_demographic(k, v[:value])
       end
-      char.update_demographic(:fullname, chargen_data[:fullname])
       
       age_or_bday = chargen_data[:demographics][:age][:value]
 
@@ -104,6 +103,7 @@ module AresMUSH
       char.update(rp_hooks: Website.format_input_for_mush(chargen_data[:rp_hooks]))
       char.update(description: Website.format_input_for_mush(chargen_data[:desc]))
       char.update(shortdesc: Website.format_input_for_mush(chargen_data[:shortdesc]))
+      char.update(profile_image: chargen_data[:profile_image])
       
       if FS3Skills.is_enabled?
         error = FS3Skills.save_char(char, chargen_data)

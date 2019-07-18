@@ -46,7 +46,13 @@ module AresMUSH
       end
     end    
       
-
+    def self.notify(post, category, type, message)
+      Global.notifier.notify_ooc(type, message) do |char|
+        !Forum.is_forum_muted?(char) &&
+        Forum.can_read_category?(char, category) &&
+        !Forum.is_category_hidden?(char, category)
+      end
+    end
     
     # Client may be nil for automated bbposts.  Otherwise it will be used
     # to emit error messages.
@@ -73,13 +79,9 @@ module AresMUSH
           :category => category.name, 
           :reference => new_post.reference_str,
           :author => author_name)
-                
-        Global.notifier.notify_ooc(:new_forum_post, message) do |char|
-          !Forum.is_forum_muted?(char) &&
-          Forum.can_read_category?(char, category) &&
-          !Forum.is_category_hidden?(char, category)
-        end
-
+        
+        Forum.add_recent_post(new_post)
+        Forum.notify(new_post, category, :new_forum_post, message)
         Forum.handle_forum_achievement(author, :post)
         
         new_post
@@ -106,13 +108,14 @@ module AresMUSH
         :reference => post.reference_str,
         :author => author.name)
       
+      Forum.add_recent_post(post)
       Forum.handle_forum_achievement(author, :reply)
-      
-      Global.notifier.notify_ooc(:new_forum_post, message) do |char|
-        !Forum.is_forum_muted?(char) &&
-        Forum.can_read_category?(char, category) &&
-        !Forum.is_category_hidden?(char, category)
+      Forum.notify(post, category, :new_forum_reply, message)
+            
+      if (post.author && author != post.author)
+        Login.notify(post.author, :forum, t('forum.new_forum_reply', :subject => post.subject), "#{category.id}|#{post.id}")
       end
+      
     end
     
     # Important: Client may actually be nil here for a system-initiated bbpost.
@@ -233,10 +236,8 @@ module AresMUSH
         :reference => post.reference_str,
         :author => enactor.name)
       
-      Global.notifier.notify_ooc(:forum_edited, notification) do |char|
-        Forum.can_read_category?(char, category)
-      end
-      
+      Forum.add_recent_post(post)
+      Forum.notify(post, category, :forum_edited, notification)
       Forum.mark_read_for_player(enactor, post)
     end
     
@@ -250,10 +251,8 @@ module AresMUSH
         :reference => post.reference_str,
         :author => enactor.name)
       
-      Global.notifier.notify_ooc(:forum_edited, notification) do |char|
-        Forum.can_read_category?(char, category)
-      end
-      
+      Forum.add_recent_post(post)
+      Forum.notify(post, category, :forum_edited, notification)
       Forum.mark_read_for_player(enactor, post)
     end
     
@@ -261,6 +260,16 @@ module AresMUSH
       category.unread_posts(enactor).each do |p|
         Forum.mark_read_for_player(enactor, p)
       end
+    end
+    
+    def self.add_recent_post(post)
+      recent = Game.master.recent_forum_posts
+      recent.unshift(post.id)
+      recent = recent.uniq
+      if (recent.count > 100)
+        recent.pop
+      end
+      Game.master.update(recent_forum_posts: recent)
     end
   end
 end

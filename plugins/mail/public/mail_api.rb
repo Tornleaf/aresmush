@@ -4,6 +4,14 @@ module AresMUSH
     def self.send_mail(names, subject, body, client, author = nil)
       author = author || Game.master.system_character
       recipients = []
+      
+      if author.has_any_role?("guest")
+        if (client)
+          client.emit_failure t('dispatcher.not_allowed') 
+        end
+        return false
+      end
+      
       names.each do |name|
         recipient = Character.find_one_by_name(name)
         if (!recipient)
@@ -21,6 +29,7 @@ module AresMUSH
       recipients = recipients.uniq
       
       to_list = recipients.map { |r| r.name }.join(" ")
+      notification = t('mail.new_mail', :from => author.name, :subject => subject)
       
       recipients.each do |r|
         delivery = MailMessage.create(subject: subject, body: body, author: author, to_list: to_list, character: r)
@@ -36,9 +45,10 @@ module AresMUSH
           tags << Mail.inbox_tag
         end
         delivery.update(tags: tags)  
+        Login.notify(r, :mail, notification, delivery.id)
       end
       
-      Global.notifier.notify_ooc(:new_mail, t('mail.new_mail', :from => author.name, :subject => subject)) do |char|
+      Global.notifier.notify_ooc(:new_mail, notification) do |char|
          char && recipients.include?(char) && char != author
       end
       

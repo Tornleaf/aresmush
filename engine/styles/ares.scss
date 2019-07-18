@@ -104,6 +104,15 @@ code {
     border: none;
 }
 
+.inline-block {
+  display: inline-block;
+}
+
+
+.ember-basic-dropdown-content {
+  z-index: 3001;
+}
+
 /* -------------------------
 NAVIGATION
 ------------------------- */
@@ -988,6 +997,16 @@ input[type='file'] {
   color: transparent;
 }
 
+.combat-damage {
+  color: red;
+}
+
+#combat-log {
+  max-height: 100px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  margin: 5px;
+}
 /* -------------------------
 CHAT SCREEN
 ------------------------- */
@@ -1004,8 +1023,14 @@ CHAT SCREEN
 }
 .chat-button {
   width: 100%;
+  white-space:normal !important;
+  word-wrap: break-word; 
 }
 
+.chat-report {
+  max-height: 200px;
+   overflow-y: scroll;
+}
 .timestamp-tip {
   color: $faded-text-color;
   font-style: italic;
@@ -1062,6 +1087,10 @@ JOBS SCREEN
   background-color: gray;
 }
 
+.job-category-general {
+  background-color: white;
+  border: 1px solid gray;
+}
 .job-category-ALERT, .job-category-BUG {
   background-color: red;
   color: white;

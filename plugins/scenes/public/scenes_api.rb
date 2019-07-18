@@ -18,10 +18,10 @@ module AresMUSH
       autospace_str.gsub(/\%n/i, Demographics.name_and_nickname(enactor))
     end
     
-    def self.add_to_scene(scene, pose, character = Game.master.system_character, is_setpose = nil, is_ooc = nil)
+    def self.add_to_scene(scene, pose, character = Game.master.system_character, is_setpose = nil, is_ooc = nil, place_name = nil)
       return nil if !scene.logging_enabled
       
-      scene_pose = ScenePose.create(pose: pose, character: character, scene: scene, is_setpose: is_setpose, is_ooc: is_ooc)
+      scene_pose = ScenePose.create(pose: pose, character: character, scene: scene, is_setpose: is_setpose, is_ooc: is_ooc, place_name: place_name ? place_name : character.place_name)
       if (!scene_pose.is_system_pose?)
         Scenes.add_participant(scene, character)
       end
@@ -74,6 +74,19 @@ module AresMUSH
         room.emit_ooc t('scenes.announce_scene_start', :privacy => private_scene ? "Private" : "Open", :name => enactor.name, :num => scene.id)
       end
       return scene
+    end
+    
+    def self.get_recent_scenes_web_data
+      Scenes.recent_scenes[0..9].map { |s| {
+                      id: s.id,
+                      title: s.title,
+                      summary: s.summary,
+                      location: s.location,
+                      icdate: s.icdate,
+                      participants: s.participants.to_a.sort_by { |p| p.name }.map { |p| { name: p.name, id: p.id, icon: Website.icon_for_char(p) }},
+                      scene_type: s.scene_type ? s.scene_type.titlecase : 'unknown',
+      
+                    }}
     end
     
   end
