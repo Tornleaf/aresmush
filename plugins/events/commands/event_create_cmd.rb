@@ -1,3 +1,6 @@
+require 'net/http'
+require 'uri'
+
 module AresMUSH
 
   module Events
