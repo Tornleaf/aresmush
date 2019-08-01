@@ -27,8 +27,8 @@ module AresMUSH
         Events.create_event(enactor, self.title, datetime, desc)
         client.emit_success t('events.event_created')
         Net::HTTP.post URI('https://discordapp.com/api/webhooks/605822739374276661/w9ouIBZq8vspYNBYLDD34Xp0pfGMtCEA7wcEWjQx9BZGGZQAqmAN5CGG6qSrOoKf_q47'),
-        { "message": "this is event text" }.to_json,
-        "Content-Type" => "application/json"
+          { "message": "this is event text" }.to_json,
+          "Content-Type" => "application/json"
       end
     end
   end
