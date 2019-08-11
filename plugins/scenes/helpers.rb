@@ -7,10 +7,12 @@ module AresMUSH
       Global.client_monitor.notify_web_clients(:new_scene_activity, web_msg) do |char|
         Scenes.can_read_scene?(char, scene) && Scenes.is_watching?(scene, char)
       end
-      message = t('scenes.new_scene_activity')
-      scene.watchers.each do |w|
-        if (last_posed != w.name)
-          Login.notify(w, :scene, message, "")
+      if (activity_type =~ /pose/)
+        message = t('scenes.new_scene_activity', :id => scene.id)
+        scene.watchers.each do |w|
+          if (last_posed != w.name)
+            Login.notify(w, :scene, message, scene.id, "", false)
+          end
         end
       end
     end
@@ -437,7 +439,7 @@ module AresMUSH
     end
     
     def self.handle_scene_participation_achievement(char)
-      scenes = char.scenes_starring
+      scenes = Scene.all.select { |s| s.completed && s.participants.include?(char) }
       count = scenes.count
         
       Scenes.scene_types.each do |type|
@@ -472,6 +474,7 @@ module AresMUSH
       scenes = char.read_scenes || []
       scenes << scene.id.to_s
       char.update(read_scenes: scenes)
+      Login.mark_notices_read(char, :scene, scene.id)
     end
     
     def self.mark_unread(scene, except_for_char = nil)
@@ -583,7 +586,7 @@ module AresMUSH
         title: scene.title,
         location: Scenes.build_location_web_data(scene),
         completed: scene.completed,
-        summary: scene.summary,
+        summary: Website.format_markdown_for_html(scene.summary),
         content_warning: scene.content_warning,
         tags: scene.tags,
         icdate: scene.icdate,
@@ -638,6 +641,52 @@ module AresMUSH
         recent.pop
       end
       Game.master.update(recent_scenes: recent)
+    end
+    
+    def self.parse_web_pose(pose, enactor, pose_type)
+      is_setpose = pose_type == 'setpose'
+      is_gmpose = pose_type == 'gm'
+      is_ooc = pose_type == 'ooc'
+      
+      command = ((pose.split(" ").first) || "").downcase
+      is_emit = false
+      if (command == "ooc")
+        is_ooc = true
+        pose = pose.after(" ")
+        pose = PoseFormatter.format(enactor.name, pose)
+      elsif (command == "scene/set")
+        is_setpose = true
+        is_emit = true
+        pose = pose.after(" ")
+      elsif (command == "emit/set") 
+        is_setpose = true
+        is_emit = true
+        pose = pose.after(" ")
+      elsif (command == "emit/gm")
+        is_gmpose = true
+        is_emit = true
+        pose = pose.after(" ")
+      elsif (command == "emit")
+        is_emit = true
+        pose = pose.after(" ")
+      else
+        markers = PoseFormatter.pose_markers
+        markers.delete "\""
+        markers.delete "'"
+        if (pose.start_with?(*markers) || is_ooc)
+          pose = PoseFormatter.format(enactor.name, pose)
+        else 
+          is_emit = true
+        end
+      end
+      
+      {
+        pose: pose,
+        is_emit: is_emit,
+        is_ooc: is_ooc,
+        is_setpose: is_setpose,
+        is_gmpose: is_gmpose
+      }
     end
   end
 end
