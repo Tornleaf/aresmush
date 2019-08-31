@@ -21,7 +21,7 @@ module AresMUSH
       end
 
       def self.txt_color(char)
-        char.txt_color || "%xh%xy"
+        char.txt_color || "%x93"
       end
 
       def self.txt_recipient(sender, recipient, recipient_names, message, scene_id)
