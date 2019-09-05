@@ -22,7 +22,7 @@ en:
 
       recipient_indicator: "%{recipients}"
 
-      txt_indicator: "%{color}%{start_marker}TXT to %{recipients}%{color}%{end_marker}%xn"
+      txt_indicator: "%{color}TXT %{start_marker}%{sender} to %{recipients}%{color}%{end_marker}%xn"
 
       color_set: "Txts will now appear with this marker: %{option}%%%xn"
 
