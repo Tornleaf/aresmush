@@ -153,6 +153,8 @@ module AresMUSH
         return ChangeSceneLocationHandler
       when "changeSceneStatus"
         return ChangeSceneStatusRequestHandler
+      when "collapseScenePoses"
+        return CollapseScenePosesRequestHandler
       when "createPlot"
         return CreatePlotRequestHandler
       when "createScene"
@@ -211,6 +213,11 @@ module AresMUSH
         return WatchSceneRequestHandler
       end
       nil
+    end
+    
+    def self.check_config
+      validator = ScenesConfigValidator.new
+      validator.validate
     end
   end
 end

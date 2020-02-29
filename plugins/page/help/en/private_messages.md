@@ -17,7 +17,8 @@ Pages are private messages sent between players. The `pm` command is aliased to 
 
 `pm <list of names>=<message>` - Send a pm to a list of players.
 `pm/review` - Shows available conversations.
-`pm/review <names>` - Reviews a conversation.
+`pm/review <names or #>` - Reviews a conversation.
+`pm/scan` - Shows if you have unread PMs. You can add this to your [onconnect](/help/onconnect).
 
 > **Note:** Conversations are automatically deleted (after 60 days by default) to prevent database clutter. 
 
@@ -30,10 +31,10 @@ When you page someone who's offline, idle, AFK, in 'do not disturb' (DND) mode, 
 
 ## Blocking and Reporting Pages
 
-You can block pages from someone you don't want to hear from, or put yourself in 'do not disturb' mode while you're RPing. If someone is harassing you in pages, you can report them.  This will automatically include a copy of the pages you select (from page/review) in your report.
+You can block pages from someone you don't want to hear from, or put yourself in 'do not disturb' mode while you're RPing. If someone is harassing you in pages, you can report them.  This will automatically include a copy of the pages in your report. You select which message to start from (using the message numbers in page/review).
 
-`pm/dnd <on or off>` - 
+`pm/dnd <on or off>` - Turns 'do not disturb' mode on or off.
 `pm/ignore <name>=<on or off>` - Blocks messages from a player.
-`pm/report <conversation>=<range of messages from page review>/<reason>` - Creates a report of inapprpriate messages.  
+`pm/report <conversation>=<message # to start with>/<reason>` - Creates a report of inappropriate messages.  
   
-> **Tip:** You have to use the full conversation title in the report if it involves multiple people.  For example, page/report Bob Mary=12-15/Bob said terrible things!
+> **Tip:** You have to use the full conversation title in the report if it involves multiple people.  For example, page/report Bob Mary=12/Bob said terrible things!

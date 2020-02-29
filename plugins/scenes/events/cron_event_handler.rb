@@ -56,7 +56,7 @@ module AresMUSH
         
         Scene.all.select { |s| s.completed && !s.shared }.each do |scene|
           
-          elapsed_days = (Time.now - scene.date_completed) / 86400
+          elapsed_days = scene.days_since_shared
           if (elapsed_days > delete_days  && scene.deletion_warned)
             Global.logger.info "Deleting scene #{scene.id} - #{scene.title} completed #{scene.date_completed}"
             scene.delete
@@ -80,7 +80,7 @@ module AresMUSH
       end
       
       def post_trending_scenes
-        recent_scenes = Scenes.all.select { |s| s.likes > 0 && (Time.now - (s.date_shared || s.created_at) < 864000) }
+        recent_scenes = Scene.all.select { |s| s.likes > 0 && (Time.now - (s.date_shared || s.created_at) < 864000) }
         trending = recent_scenes.sort_by { |s| -s.likes }[0, 10]
         
         return if trending.count < 1
